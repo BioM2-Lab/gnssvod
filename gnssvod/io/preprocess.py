@@ -370,7 +370,8 @@ def gather_stations(filepattern: dict,
                     # add the station data in the iout list
                     iout.append(idata)
                 else:
-                    iout.append(pd.DataFrame(index=pd.MultiIndex.from_tuples([], names=['Epoch', 'SV'])))
+                    #iout.append(pd.DataFrame(index=pd.MultiIndex.from_tuples([], names=['Epoch', 'SV'])))
+                    iout.append(pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []], names=['Epoch', 'SV'])))
                     print(f"No data for station {station_name}.")
                     continue
 
@@ -396,6 +397,7 @@ def gather_stations(filepattern: dict,
                     # sort dimensions
                     ds = iout.to_xarray()
                     ds = ds.sortby(['Epoch','SV','Station'])
+                    ds['Epoch'] = pd.DatetimeIndex(ds['Epoch'].values)
                     # write nc file
                     export_as_nc(ds = ds,
                         outpath = outpath,
