@@ -358,7 +358,7 @@ def read_obsFile_v2(observationFile,header=False):
         interval = 30
     else:
         interval = epochList[1] - epochList[0]
-        interval = interval.seconds
+        interval = interval.seconds + (interval.microseconds / 1_000_000)
     f.close() # close the file
     #---------------------------------------------------------------------------------------
     finish = time.time()
@@ -390,11 +390,23 @@ def read_obsFile_v3(obsFileName,header):
             approx_position = [float(i) for i in approx_position]
             line += 1
         elif 'TIME OF FIRST OBS' in obsLines[line]:
-            start_date = obsLines[line][0:obsLines[line].index('TIME')].split()[0:-1]
+            # Format is
+            # <YEAR> <MONTH> <DAY> <HOUR> <MINUTE> <SECOND>.<DECIMAL> GPS TIME OF FIRST OBS
+            # By replacng . with ' ' we can just split across white space
+            start_date = obsLines[line][0:obsLines[line].index('TIME')].replace('.', ' ').split()[0:-1]
+            # OBS file record to the tenth of a microsecond. For now,  ignore last digit. 
+            # May need to switch to rounding in the future
+            start_date[-1] = start_date[-1][:-1]
             start_date = datetime.datetime(*np.array(start_date,dtype=float).round().astype(int))
             line += 1
         elif 'TIME OF LAST OBS' in obsLines[line]:
-            end_date = obsLines[line][0:obsLines[line].index('TIME')].split()[0:-1]
+            # Format is
+            # <YEAR> <MONTH> <DAY> <HOUR> <MINUTE> <SECOND>.<DECIMAL> GPS TIME OF LAST OBS
+            # By replacng . with ' ' we can just split across white space
+            end_date = obsLines[line][0:obsLines[line].index('TIME')].replace('.', ' ').split()[0:-1]
+            # OBS file record to the tenth of a microsecond. For now,  ignore last digit. 
+            # May need to switch to rounding in the future
+            end_date[-1] = end_date[-1][:-1]
             end_date = datetime.datetime(*np.array(end_date,dtype=float).round().astype(int))
             line += 1
         elif 'SYS / # / OBS TYPES' in obsLines[line]:
@@ -549,7 +561,8 @@ def read_obsFile_v3(obsFileName,header):
                                     day = int(epoch_day),
                                     hour = int(epoch_hour),
                                     minute = int(epoch_minute),
-                                    second = int(float(epoch_second)))
+                                    second = int(float(epoch_second)),
+                                    microsecond = int((float(epoch_second) % 1)*1_000_000))
             epochList.append(epoch)
             currentline += 1 # move beyond header line
             # =============================================================================
@@ -673,7 +686,7 @@ def read_obsFile_v3(obsFileName,header):
         interval = 30
     else:
         interval = epochList[1] - epochList[0]
-        interval = interval.seconds
+        interval = interval.seconds + (interval.microseconds / 1_000_000)
     f.close() # close the file
     # =============================================================================
     finish = time.time()     # Time of finish
