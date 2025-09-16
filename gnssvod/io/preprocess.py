@@ -108,7 +108,7 @@ def preprocess(filepattern: dict,
     out = dict()
     for item in filelist.items():
         station_name = item[0]
-        filelist = item[1]
+        sub_filelist = item[1]
 
         # checking which files will be skipped (if necessary)
         if (not overwrite) and (outputdir is not None):
@@ -120,7 +120,7 @@ def preprocess(filepattern: dict,
         
         # for each file
         result = []
-        for i,filename in enumerate(filelist):
+        for i,filename in enumerate(sub_filelist):
             # determine the name of the output file that will be saved at the end of the loop
             out_name = os.path.splitext(os.path.basename(filename))[0]+'.nc'
             # if the name of the saved output file is in the files to skip, skip processing
@@ -371,7 +371,7 @@ def gather_stations(filepattern: dict,
                     # add the station data in the iout list
                     iout.append(idata)
                 else:
-                    iout.append(pd.DataFrame())
+                    iout.append(pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []], names=['Epoch', 'SV'])))
                     print(f"No data for station {station_name}.")
                     continue
 
@@ -397,6 +397,7 @@ def gather_stations(filepattern: dict,
                     # sort dimensions
                     ds = iout.to_xarray()
                     ds = ds.sortby(['Epoch','SV','Station'])
+                    ds['Epoch'] = pd.DatetimeIndex(ds['Epoch'].values)
                     # write nc file
                     export_as_nc(ds = ds,
                         outpath = outpath,
