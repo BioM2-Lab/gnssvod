@@ -44,6 +44,8 @@ def sp3_interp_fast(start_time, end_time, interval=30, poly_degree=16, sp3_produ
     sp3_resampled = []
     for sv in svList:
         sp3_temp = sp3.xs(sv,level='SV')[['X','Y','Z']] * 1000 # km to m
+        # Remove duplicate midnight values
+        sp3_temp = sp3_temp[~sp3_temp.index.duplicated(keep='first')]
         # only process if a minimum of 4 orbit data points are present
         if len(sp3_temp)>3:
             sp3_temp_resampled = sp3_temp.resample(f"{interval}s")
@@ -66,6 +68,8 @@ def sp3_interp_fast(start_time, end_time, interval=30, poly_degree=16, sp3_produ
     clock_resampled = []
     for sv in svList_clk:
         clock_temp = clock.xs(sv,level='SV')
+        # Remove duplicate midnight values
+        clock_temp = clock_temp[~clock_temp.index.duplicated(keep='first')]
         # only process if a minimum of 4 clock data points are present
         if len(clock_temp)>3:
             clock_temp_resampled = clock_temp.resample(f"{interval}s")
